@@ -81,6 +81,228 @@ Example response with no key:
 {"aiEnabled":false}
 ```
 
+## Use the API from a React frontend with RTK Query
+
+The examples below use React, TypeScript, and Vite. They assume the backend is running at `http://localhost:8080` and the frontend at `http://localhost:5173`.
+
+### 1. Install Redux Toolkit and React Redux
+
+Run this in the frontend project:
+
+```bash
+npm install @reduxjs/toolkit react-redux
+```
+
+### 2. Define API response types
+
+Create `src/services/ecoScanApi.ts`. These types match the JSON returned by this backend:
+
+```ts
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+
+export type WasteResult = {
+  itemName: string;
+  category: "Plastic" | "Organic" | "E-Waste" | "Paper" | "Metal" | "Glass" | "Other";
+  bin: "recyclable" | "organic" | "non-recyclable" | "special";
+  tip: string;
+};
+
+export type DemoItem = {
+  id: string;
+  name: string;
+  icon: string;
+};
+
+export type ApiStatus = {
+  aiEnabled: boolean;
+};
+```
+
+### 3. Create RTK Query endpoints
+
+Add these endpoints in the same `ecoScanApi.ts` file. `FormData` sends the image as multipart data with the required field name `image`.
+
+```ts
+export const ecoScanApi = createApi({
+  reducerPath: "ecoScanApi",
+  baseQuery: fetchBaseQuery({ baseUrl: "http://localhost:8080/api" }),
+  endpoints: (builder) => ({
+    getDemoItems: builder.query<DemoItem[], void>({
+      query: () => "/demo",
+    }),
+    getDemoResult: builder.query<WasteResult, string>({
+      query: (id) => `/demo/${encodeURIComponent(id)}`,
+    }),
+    getApiStatus: builder.query<ApiStatus, void>({
+      query: () => "/status",
+    }),
+    scanImage: builder.mutation<WasteResult, File>({
+      query: (image) => {
+        const body = new FormData();
+        body.append("image", image);
+        return {
+          url: "/scan",
+          method: "POST",
+          body,
+        };
+      },
+    }),
+  }),
+});
+
+export const {
+  useGetDemoItemsQuery,
+  useGetDemoResultQuery,
+  useGetApiStatusQuery,
+  useScanImageMutation,
+} = ecoScanApi;
+```
+
+Do not set the `Content-Type` header yourself for the image request. The browser must add the multipart boundary.
+
+### 4. Add the API reducer and middleware to the Redux store
+
+Create `src/store.ts`:
+
+```ts
+import { configureStore } from "@reduxjs/toolkit";
+import { ecoScanApi } from "./services/ecoScanApi";
+
+export const store = configureStore({
+  reducer: {
+    [ecoScanApi.reducerPath]: ecoScanApi.reducer,
+  },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(ecoScanApi.middleware),
+});
+```
+
+### 5. Provide the store to React
+
+Wrap the application with Redux's `Provider`, for example in `src/main.tsx`:
+
+```tsx
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { Provider } from "react-redux";
+import { store } from "./store";
+import App from "./App";
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <Provider store={store}>
+      <App />
+    </Provider>
+  </React.StrictMode>,
+);
+```
+
+### 6. Show AI status and the demo list
+
+Generated query hooks load data and expose loading and error states:
+
+```tsx
+import { useGetApiStatusQuery, useGetDemoItemsQuery } from "./services/ecoScanApi";
+
+export function DemoList() {
+  const { data: status } = useGetApiStatusQuery();
+  const { data: items, isLoading, error } = useGetDemoItemsQuery();
+
+  if (isLoading) return <p>Loading demo items...</p>;
+  if (error) return <p>Could not load demo items.</p>;
+
+  return (
+    <section>
+      <p>AI mode: {status?.aiEnabled ? "On" : "Off (use demo mode)"}</p>
+      <ul>
+        {items?.map((item) => (
+          <li key={item.id}>
+            {item.icon} {item.name}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+```
+
+Call `useGetDemoResultQuery(id)` to load the result for a chosen item:
+
+```tsx
+const { data, isLoading, error } = useGetDemoResultQuery("plastic-bottle");
+```
+
+### 7. Upload an image and display the scan result
+
+The scan is a mutation. Pass the selected `File` to the trigger function; the browser sends it as multipart form data.
+
+```tsx
+import { useState, type FormEvent } from "react";
+import { useScanImageMutation } from "./services/ecoScanApi";
+import { getErrorMessage } from "./getErrorMessage";
+
+export function ImageScan() {
+  const [image, setImage] = useState<File>();
+  const [scanImage, { data, isLoading, error }] = useScanImageMutation();
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (image) {
+      await scanImage(image);
+    }
+  }
+
+  return (
+    <section>
+      <form onSubmit={submit}>
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={(event) => setImage(event.target.files?.[0])}
+        />
+        <button type="submit" disabled={!image || isLoading}>
+          {isLoading ? "Scanning..." : "Scan image"}
+        </button>
+      </form>
+
+      {data && (
+        <div>
+          <h2>{data.itemName}</h2>
+          <p>Category: {data.category}</p>
+          <p>Bin: {data.bin}</p>
+          <p>{data.tip}</p>
+        </div>
+      )}
+
+      {error && <p>{getErrorMessage(error)}</p>}
+    </section>
+  );
+}
+```
+
+To show the backend's friendly error message (such as AI mode being off), create `src/getErrorMessage.ts`:
+
+```ts
+import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
+import type { SerializedError } from "@reduxjs/toolkit";
+
+export function getErrorMessage(error: FetchBaseQueryError | SerializedError): string {
+  if ("status" in error && "data" in error) {
+    const data = error.data;
+    if (data && typeof data === "object" && "message" in data) {
+      return String(data.message);
+    }
+  }
+  return "The request failed. Please try again.";
+}
+```
+
+The scan endpoint accepts files up to 5 MB and only accepts valid JPEG, PNG, and WebP images. When `aiEnabled` is `false`, scans return HTTP `503`; the demo list and demo result endpoints still work.
+
+### 8. Check CORS if the browser blocks a request
+
+The backend permits the Vite origin `http://localhost:5173` and `http://localhost:3000` for `/api/**` by default. If your frontend uses a different origin, add it to `app.cors.allowed-origins` in `application.properties`, restart the backend, and retry.
+
 ## Test requests
 
 Run these with the application started. Replace the sample path with an existing image for the valid scan:
