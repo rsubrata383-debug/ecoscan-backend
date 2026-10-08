@@ -1,0 +1,35 @@
+@baseUrl = http://localhost:8080
+
+### Scan a local image (set imagePath in your HTTP client)
+POST {{baseUrl}}/api/scan
+Content-Type: multipart/form-data; boundary=EcoScanBoundary
+
+--EcoScanBoundary
+Content-Disposition: form-data; name="image"; filename="plastic-bottle.jpg"
+Content-Type: image/jpeg
+
+< C:\images\plastic-bottle.jpg
+--EcoScanBoundary--
+
+### Demo list
+GET {{baseUrl}}/api/demo
+
+### Demo result
+GET {{baseUrl}}/api/demo/plastic-bottle
+
+### Unknown demo identifier
+GET {{baseUrl}}/api/demo/unknown
+
+### Status
+GET {{baseUrl}}/api/status
+
+### Bad file type
+POST {{baseUrl}}/api/scan
+Content-Type: multipart/form-data; boundary=EcoScanBadFile
+
+--EcoScanBadFile
+Content-Disposition: form-data; name="image"; filename="notes.txt"
+Content-Type: text/plain
+
+This is not an image.
+--EcoScanBadFile--
