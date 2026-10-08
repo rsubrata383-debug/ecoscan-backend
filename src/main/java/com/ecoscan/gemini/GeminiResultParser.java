@@ -5,9 +5,11 @@ import static com.ecoscan.constant.WasteConstants.*;
 
 import com.ecoscan.constant.ApiMessages;
 import com.ecoscan.exception.ApiException;
+import com.ecoscan.model.MultiWasteResult;
 import com.ecoscan.model.WasteResult;
 import com.ecoscan.util.ListUtils;
 import com.ecoscan.util.TextUtils;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -24,7 +26,7 @@ public class GeminiResultParser {
         this.objectMapper = objectMapper;
     }
 
-    public WasteResult parseResponse(JsonNode response) {
+    public MultiWasteResult parseResponse(JsonNode response) {
         JsonNode textNode = response == null ? null
                 : response.path(CANDIDATES).path(0).path(CONTENT).path(PARTS).path(0).path(TEXT);
         if (textNode == null || !textNode.isString() || textNode.asString().isBlank()) {
@@ -33,28 +35,48 @@ public class GeminiResultParser {
         return parse(textNode.asString());
     }
 
-    WasteResult parse(String json) {
+    MultiWasteResult parse(String json) {
         if (json == null || json.isBlank()) {
             throw new ApiException(HttpStatus.BAD_GATEWAY, ApiMessages.INVALID_SCAN_RESULT);
         }
         try {
-            WasteResult result = objectMapper.readValue(json, WasteResult.class);
-            validateRequired(result);
+            JsonNode root = objectMapper.readTree(json);
+            List<WasteResult> items = new ArrayList<>();
 
-            String itemName = result.itemName().trim();
-            String category = result.category();
-            String bin = result.bin();
-            validateAllowedValues(category, bin);
-            if (itemName.equalsIgnoreCase(UNKNOWN_ITEM_NAME)) {
-                bin = NON_RECYCLABLE_BIN;
-            } else if (category.equals(E_WASTE_CATEGORY)) {
-                bin = SPECIAL_BIN;
+            if (root.has(ITEMS) && root.get(ITEMS).isArray()) {
+                for (JsonNode itemNode : root.get(ITEMS)) {
+                    WasteResult item = objectMapper.treeToValue(itemNode, WasteResult.class);
+                    items.add(processSingleItem(item));
+                }
+            } else if (root.has(ITEM_NAME)) {
+                WasteResult item = objectMapper.treeToValue(root, WasteResult.class);
+                items.add(processSingleItem(item));
             }
 
-            return normalize(result, itemName, category, bin);
+            if (items.isEmpty()) {
+                throw new ApiException(HttpStatus.BAD_GATEWAY, ApiMessages.INVALID_SCAN_RESULT);
+            }
+
+            return MultiWasteResult.of(items);
         } catch (JacksonException exception) {
             throw new ApiException(HttpStatus.BAD_GATEWAY, ApiMessages.INVALID_SCAN_RESULT);
         }
+    }
+
+    private WasteResult processSingleItem(WasteResult result) {
+        validateRequired(result);
+
+        String itemName = result.itemName().trim();
+        String category = result.category();
+        String bin = result.bin();
+        validateAllowedValues(category, bin);
+        if (itemName.equalsIgnoreCase(UNKNOWN_ITEM_NAME)) {
+            bin = NON_RECYCLABLE_BIN;
+        } else if (category.equals(E_WASTE_CATEGORY)) {
+            bin = SPECIAL_BIN;
+        }
+
+        return normalize(result, itemName, category, bin);
     }
 
     private void validateRequired(WasteResult result) {

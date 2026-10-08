@@ -65,7 +65,7 @@ class GeminiServiceTest {
 
     @Test
     void parsesFullResult() {
-        WasteResult result = parser.parse(FULL_RESULT);
+        WasteResult result = parser.parse(FULL_RESULT).primaryItem();
 
         assertEquals("Plastic Bottle", result.itemName());
         assertEquals("PET 1 Plastic", result.material());
@@ -76,7 +76,7 @@ class GeminiServiceTest {
 
     @Test
     void missingOptionalFieldsBecomeEmpty() {
-        WasteResult result = parser.parse(REQUIRED_FIELDS);
+        WasteResult result = parser.parse(REQUIRED_FIELDS).primaryItem();
 
         assertEquals("Rinse it before recycling.", result.tip());
         assertEquals("", result.material());
@@ -114,7 +114,7 @@ class GeminiServiceTest {
         String tip = "one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty one";
         String json = REQUIRED_FIELDS.replace(" Rinse it before recycling. ", " " + tip + " ");
 
-        assertEquals(tip, parser.parse(json).tip());
+        assertEquals(tip, parser.parse(json).primaryItem().tip());
     }
 
     @Test
@@ -123,12 +123,12 @@ class GeminiServiceTest {
                 "[\"Empty it\", \"Crush it\"]",
                 "[\"One\", \"Two\", \"Three\", \"Four\"]");
 
-        assertEquals(List.of("One", "Two", "Three"), parser.parse(json).howToPrepare());
+        assertEquals(List.of("One", "Two", "Three"), parser.parse(json).primaryItem().howToPrepare());
     }
 
     @Test
     void unknownItemUsesNonRecyclableBin() {
-        WasteResult result = parser.parse(REQUIRED_FIELDS.replace("\"Plastic Bottle\"", "\"Unknown\""));
+        WasteResult result = parser.parse(REQUIRED_FIELDS.replace("\"Plastic Bottle\"", "\"Unknown\"")).primaryItem();
 
         assertEquals("non-recyclable", result.bin());
     }
@@ -139,7 +139,34 @@ class GeminiServiceTest {
                 .replace("\"Plastic\"", "\"E-Waste\"")
                 .replace("\"recyclable\"", "\"organic\"");
 
-        assertEquals("special", parser.parse(json).bin());
+        assertEquals("special", parser.parse(json).primaryItem().bin());
+    }
+
+    @Test
+    void parsesMultiItemsArray() {
+        String multiJson = """
+                {
+                  "items": [
+                    {
+                      "itemName": "Plastic Bottle",
+                      "category": "Plastic",
+                      "bin": "recyclable",
+                      "tip": "Rinse it."
+                    },
+                    {
+                      "itemName": "Banana Peel",
+                      "category": "Organic",
+                      "bin": "organic",
+                      "tip": "Compost it."
+                    }
+                  ]
+                }
+                """;
+        var multiResult = parser.parse(multiJson);
+        assertEquals(2, multiResult.totalDetected());
+        assertEquals(2, multiResult.items().size());
+        assertEquals("Plastic Bottle", multiResult.primaryItem().itemName());
+        assertEquals("Banana Peel", multiResult.items().get(1).itemName());
     }
 
     private void assertBadGateway(String json) {

@@ -32,11 +32,11 @@ public class GeminiClient {
             RestClient restClient,
             GeminiRequestBuilder requestBuilder,
             @Value("${gemini.api.key:}") String apiKey,
-            @Value("${gemini.model:gemini-3.5-flash}") String model) {
+            @Value("${gemini.model:gemini-flash-lite-latest}") String model) {
         this.restClient = restClient;
         this.requestBuilder = requestBuilder;
-        this.apiKey = apiKey.trim();
-        this.model = model;
+        this.apiKey = apiKey != null ? apiKey.trim() : "";
+        this.model = model != null ? model.trim() : "gemini-flash-lite-latest";
     }
 
     public boolean isEnabled() {
@@ -55,7 +55,7 @@ public class GeminiClient {
                     .body(JsonNode.class);
         } catch (RestClientResponseException exception) {
             int status = exception.getStatusCode().value();
-            log.warn("Gemini returned HTTP status {}", status);
+            log.warn("Gemini returned HTTP status {}: {}", status, exception.getResponseBodyAsString());
             if (status == HttpStatus.TOO_MANY_REQUESTS.value()) {
                 throw new ApiException(HttpStatus.TOO_MANY_REQUESTS, ApiMessages.TOO_MANY_SCANS);
             }

@@ -41,16 +41,14 @@ public final class GeminiConstants {
     public static final String CANDIDATES = "candidates";
     public static final String CONTENT = "content";
     public static final String PROMPT = """
-            Identify the main waste item in the photo. Choose the bin by common household recycling rules.
-            The bin from your answer is final. Put batteries, e-waste and bulbs in "special". Put thin plastic bags
-            and food-soiled or mixed-material items in "non-recyclable".
-            Use very simple English. Keep the tip short. Lists must have 2 or 3 items, with every line 12 words
-            or fewer. Use general facts only and words like "up to" or "about". Do not give exact carbon or CO2
-            numbers. prosOfRightDisposal are good things when sorted into the right bin. consOfWrongDisposal are
-            bad things when sorted into the wrong bin.
-            If there is no clear waste item, return itemName "Unknown", bin "non-recyclable", a tip asking the
-            user to try again with a clearer photo, and empty strings or empty lists for all other fields.
-            Return only JSON fields in the required schema.
+            Identify all distinct waste items visible in the photo (up to 5 items maximum), ordered by prominence.
+            For each item, choose the bin by common household recycling rules.
+            Put batteries, e-waste and bulbs in "special". Put thin plastic bags, dirty food packaging, or soiled items in "non-recyclable".
+            Use very simple English. Keep tips short. Lists must have 2 or 3 items, with every line 12 words or fewer.
+            Use general facts only and words like "up to" or "about". Do not give exact carbon or CO2 numbers.
+            prosOfRightDisposal are good things when sorted into the right bin. consOfWrongDisposal are bad things when sorted into the wrong bin.
+            If there is no clear waste item, return 1 item with itemName "Unknown", bin "non-recyclable", a tip asking the user to try again with a clearer photo, and empty strings or empty lists for all other fields.
+            Return only JSON fields in the required schema with the "items" list.
             """;
 
     private GeminiConstants() {

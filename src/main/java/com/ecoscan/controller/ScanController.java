@@ -27,8 +27,13 @@ public class ScanController {
     }
 
     @PostMapping("/scan")
-    public WasteResult scan(@RequestParam("image") MultipartFile image) {
+    public com.ecoscan.model.MultiWasteResult scan(@RequestParam("image") MultipartFile image) {
         return geminiService.scan(image);
+    }
+
+    @GetMapping("/demo/multi")
+    public com.ecoscan.model.MultiWasteResult getMultiDemo() {
+        return demoService.getMultiDemoResult();
     }
 
     @GetMapping("/demo")

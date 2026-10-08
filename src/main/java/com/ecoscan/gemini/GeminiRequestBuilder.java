@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 public class GeminiRequestBuilder {
 
     public Map<String, Object> build(String encodedImage, String mimeType) {
-        Map<String, Object> properties = Map.ofEntries(
+        Map<String, Object> itemProperties = Map.ofEntries(
                 Map.entry(ITEM_NAME, stringSchema()),
                 Map.entry(CATEGORY, enumSchema(CATEGORIES)),
                 Map.entry(BIN, enumSchema(BINS)),
@@ -29,16 +29,27 @@ public class GeminiRequestBuilder {
                 Map.entry(REUSE_IDEAS, stringArraySchema()),
                 Map.entry(FUN_FACT, stringSchema()),
                 Map.entry(COMMON_MISTAKE, stringSchema()));
-        Map<String, Object> schema = Map.of(
+
+        Map<String, Object> itemSchema = Map.of(
                 TYPE, OBJECT_TYPE,
-                PROPERTIES, properties,
+                PROPERTIES, itemProperties,
                 REQUIRED, List.of(
-                        ITEM_NAME, CATEGORY, BIN, TIP, MATERIAL, RECYCLABILITY, HOW_TO_PREPARE,
+                        ITEM_NAME, CATEGORY, BIN, TIP, MATERIAL, RECYCLABILITY_FIELD, HOW_TO_PREPARE,
                         DECOMPOSITION_TIME, WHY_IT_MATTERS, PROS_OF_RIGHT_DISPOSAL, CONS_OF_WRONG_DISPOSAL,
                         AFTER_RECYCLING_IT_BECOMES, REUSE_IDEAS, FUN_FACT, COMMON_MISTAKE));
+
+        Map<String, Object> rootSchema = Map.of(
+                TYPE, OBJECT_TYPE,
+                PROPERTIES, Map.of(
+                        ITEMS, Map.of(
+                                TYPE, ARRAY_TYPE,
+                                ITEMS, itemSchema)),
+                REQUIRED, List.of(ITEMS));
+
         Map<String, Object> generationConfig = Map.of(
                 RESPONSE_MIME_TYPE, APPLICATION_JSON,
-                RESPONSE_SCHEMA, schema);
+                RESPONSE_SCHEMA, rootSchema);
+
         return Map.of(
                 CONTENTS, List.of(Map.of(
                         PARTS, List.of(

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.ecoscan.exception.ApiException;
+import com.ecoscan.model.MultiWasteResult;
 import com.ecoscan.model.WasteResult;
 import java.util.List;
 import java.util.Set;
@@ -55,6 +56,16 @@ class DemoServiceTest {
         assertEquals("special", demoService.getResult("battery").bin());
         assertEquals("E-Waste", demoService.getResult("battery").category());
         assertEquals("non-recyclable", demoService.getResult("plastic-bag").bin());
+    }
+
+    @Test
+    void getMultiResultReturnsThreeItems() {
+        MultiWasteResult multi = demoService.getMultiDemoResult();
+        assertEquals(3, multi.totalDetected());
+        assertEquals(3, multi.items().size());
+        assertEquals("Plastic Bottle", multi.primaryItem().itemName());
+        assertEquals("Aluminum Can", multi.items().get(1).itemName());
+        assertEquals("Banana Peel", multi.items().get(2).itemName());
     }
 
     @Test

@@ -4,7 +4,7 @@ import com.ecoscan.constant.ApiMessages;
 import com.ecoscan.exception.ApiException;
 import com.ecoscan.gemini.GeminiClient;
 import com.ecoscan.gemini.GeminiResultParser;
-import com.ecoscan.model.WasteResult;
+import com.ecoscan.model.MultiWasteResult;
 import com.ecoscan.validation.ImageValidator;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -30,7 +30,7 @@ public class GeminiService {
         return geminiClient.isEnabled();
     }
 
-    public WasteResult scan(MultipartFile image) {
+    public MultiWasteResult scan(MultipartFile image) {
         byte[] bytes = imageValidator.validate(image);
         if (!isEnabled()) {
             throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, ApiMessages.AI_DISABLED);

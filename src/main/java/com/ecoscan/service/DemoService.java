@@ -23,4 +23,12 @@ public class DemoService {
         }
         return result;
     }
+
+    public com.ecoscan.model.MultiWasteResult getMultiDemoResult() {
+        return com.ecoscan.model.MultiWasteResult.of(List.of(
+                DemoData.RESULTS.get("plastic-bottle"),
+                DemoData.RESULTS.get("aluminum-can"),
+                DemoData.RESULTS.get("banana-peel")
+        ));
+    }
 }

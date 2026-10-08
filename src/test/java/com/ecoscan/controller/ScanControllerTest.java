@@ -61,6 +61,15 @@ class ScanControllerTest {
     }
 
     @Test
+    void multiDemoReturnsThreeItems() throws Exception {
+        mockMvc.perform(get("/api/demo/multi"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalDetected").value(3))
+                .andExpect(jsonPath("$.items.length()").value(3))
+                .andExpect(jsonPath("$.primaryItem.itemName").value("Plastic Bottle"));
+    }
+
+    @Test
     void unknownDemoItemReturnsMessage() throws Exception {
         mockMvc.perform(get("/api/demo/unknown"))
                 .andExpect(status().isNotFound())
