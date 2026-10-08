@@ -1,7 +1,7 @@
 package com.ecoscan.gemini;
 
 import static com.ecoscan.constant.GeminiConstants.API_KEY_HEADER;
-import static com.ecoscan.constant.GeminiConstants.URL;
+import static com.ecoscan.constant.GeminiConstants.URL_TEMPLATE;
 
 import com.ecoscan.constant.ApiMessages;
 import com.ecoscan.exception.ApiException;
@@ -46,8 +46,9 @@ public class GeminiClient {
     public JsonNode generate(byte[] imageBytes, String mimeType) {
         String encodedImage = Base64.getEncoder().encodeToString(imageBytes);
         try {
+            java.net.URI uri = java.net.URI.create(String.format(URL_TEMPLATE, model));
             return restClient.post()
-                    .uri(URL, model)
+                    .uri(uri)
                     .header(API_KEY_HEADER, apiKey)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(requestBuilder.build(encodedImage, mimeType))

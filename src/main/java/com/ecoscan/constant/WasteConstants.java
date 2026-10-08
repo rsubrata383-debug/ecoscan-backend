@@ -13,6 +13,7 @@ public final class WasteConstants {
     public static final String CATEGORY_OTHER = "Other";
     public static final String BIN_RECYCLABLE = "recyclable";
     public static final String BIN_ORGANIC = "organic";
+    public static final String BIN_COMPOST = "compost";
     public static final String BIN_NON_RECYCLABLE = "non-recyclable";
     public static final String BIN_SPECIAL = "special";
     public static final String RECYCLABILITY_EASY = "easy";
@@ -24,7 +25,8 @@ public final class WasteConstants {
     public static final List<String> CATEGORIES = List.of(
             CATEGORY_PLASTIC, CATEGORY_ORGANIC, CATEGORY_E_WASTE, CATEGORY_PAPER,
             CATEGORY_METAL, CATEGORY_GLASS, CATEGORY_OTHER);
-    public static final List<String> BINS = List.of(BIN_RECYCLABLE, BIN_ORGANIC, BIN_NON_RECYCLABLE, BIN_SPECIAL);
+    public static final List<String> BINS = List.of(
+            BIN_RECYCLABLE, BIN_ORGANIC, BIN_COMPOST, BIN_NON_RECYCLABLE, BIN_SPECIAL);
     public static final List<String> RECYCLABILITY = List.of(
             RECYCLABILITY_EASY, RECYCLABILITY_MEDIUM, RECYCLABILITY_HARD);
     public static final List<String> IMAGE_MIME_TYPES = List.of(MIME_JPEG, MIME_PNG, MIME_WEBP);

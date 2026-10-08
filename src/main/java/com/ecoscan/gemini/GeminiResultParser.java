@@ -70,6 +70,9 @@ public class GeminiResultParser {
         String category = result.category();
         String bin = result.bin();
         validateAllowedValues(category, bin);
+        if (BIN_COMPOST.equalsIgnoreCase(bin)) {
+            bin = BIN_ORGANIC;
+        }
         if (itemName.equalsIgnoreCase(UNKNOWN_ITEM_NAME)) {
             bin = NON_RECYCLABLE_BIN;
         } else if (category.equals(E_WASTE_CATEGORY)) {
