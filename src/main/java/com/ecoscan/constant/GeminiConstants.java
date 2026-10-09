@@ -93,7 +93,7 @@ public final class GeminiConstants {
                         - "special": Batteries, electronics (e-waste), lightbulbs, and hazardous materials.
 
                         ### Field Constraints & Style:
-                        - Language: Simple, accessible English.
+                        - Language: Use simple, everyday English. Avoid complex technical jargon or academic words (such as "polymers", "anaerobic", "degradation", "leachate"). Write short, direct sentences that a student can easily understand.
                         - Lists: Any array fields (e.g., prosOfRightDisposal, consOfWrongDisposal, reuseIdeas) must contain 2 or 3 items.
                         - Conciseness: Every bullet item or tip string must be 12 words or fewer.
                         - Environmental metrics: Use qualified estimations only (e.g., "about", "up to"). Never provide exact carbon or CO2 numerical figures.
